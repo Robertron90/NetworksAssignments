@@ -1,8 +1,7 @@
-﻿//Taken from Abhishek Sagar
-
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <memory.h>
@@ -11,11 +10,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <zconf.h>
 
 /*Server process is running on this port no. Client has to send data to this port no*/
-#define SERVER_PORT     2000 
-#define SERVER_IP_ADDRESS   "10.20.1.22"
+#define SERVER_PORT     2000
+#define SERVER_IP_ADDRESS   "127.0.0.1"
 #define FILENAME   "file.txt"
+
+#define h_addr h_addr_list[0]
 
 char dbuf[1024];
 char file[100] = FILENAME;
@@ -266,7 +268,7 @@ void setup_tcp_client_communication() {
   dest.sin_addr = *((struct in_addr *)host->h_addr);
   sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	// CONNECT TO THE SERVER
-  connect(sockfd, (struct sockaddr *)&dest,sizeof(struct sockaddr));
+  connect(sockfd, (struct sockaddr *)&dest, sizeof(struct sockaddr));
 
   int option = client_choose_option();
   client_send_option(sockfd, option);
@@ -275,7 +277,7 @@ void setup_tcp_client_communication() {
   } else if (option == 0) {
     printf("file request\n");
     // CHANGE FILE NAME HERE
-    client_request_file(sockfd, "file.txt");
+    client_request_file(sockfd, FILENAME);
     
   } else printf("Error with choosing an option\n");
   
