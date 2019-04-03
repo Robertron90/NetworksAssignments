@@ -8,6 +8,7 @@ typedef struct word_struct{
 
 typedef struct result_struct_{
 
-    char c[150]; // Это тоже
+    char c[150]; //f 
 
 } result_struct_t;
+

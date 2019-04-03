@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 #define MAX_WORD_LENGTH 20
 
@@ -35,7 +36,7 @@ int word_count(char* filename)
 	if (f == NULL) return 1;
 	char c;
 	int count = 0;
-	while((c = fgetc(fp)) != EOF)
+	while((c = fgetc(f)) != EOF)
 	{
 		if(c == ' ' || c == '\n')
 		{
@@ -237,7 +238,7 @@ tcp_server(char name[]){
 								 FILE* fp = fopen(text_file, "r");
 
 								 int msg =-1;
-								 int str_msg[4];
+								 int str_msg;
 								 char **data;
 
 								 if(fp != NULL){
@@ -248,7 +249,7 @@ tcp_server(char name[]){
 								 }
 								 
 								 printf("-------------\n");
-								 snprintf(str_msg, sizeof(int), "%d", msg);
+								 memcpy(&str_msg, &msg, 4);
 								 sent_recv_bytes = send(comm_socket_fd, &str_msg, sizeof(int), 0);	
 
 								 int i;
@@ -310,13 +311,13 @@ void tcp_client(char name[], char server_ip[], int server_port, int sig) {
 			
 			int req_file = 0;
 			int num_of_nodes=0;
-			int int_buf[20];
+			int int_buf;
 
 			int next_word = 0;
 
 			if(sig == sync){
 						//Send Sync signal
-					snprintf(int_buf, sizeof(int),"%d", sync);
+					memcpy(&int_buf, &sync, 4);
 					sent_recv_bytes = send(sockfd, (char*)&int_buf, sizeof(int), 0);
 					printf("Sended: %d | No of bytes sent = %d\n", sync, sent_recv_bytes);
 					
@@ -342,7 +343,7 @@ void tcp_client(char name[], char server_ip[], int server_port, int sig) {
 					
 					//Send number of nodes in your db to another peer
 					num_of_nodes = word_count("db.txt");
-					snprintf(int_buf, 4, "%d", num_of_nodes);
+					memcpy(&int_buf, &num_of_nodes, 4);
 					sent_recv_bytes = send(sockfd, (char*)&int_buf, sizeof(int), 0);
 					printf("Sended: number of nodes = %d | No of bytes sent = %d\n", num_of_nodes, sent_recv_bytes);
 
