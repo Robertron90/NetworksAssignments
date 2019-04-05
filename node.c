@@ -10,8 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <zconf.h>
-
+#include <unistd.h>
 /*Server process is running on this port no. Client has to send data to this port no*/
 #define SERVER_PORT     2000
 #define SERVER_IP_ADDRESS   "127.0.0.1"
