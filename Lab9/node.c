@@ -315,9 +315,8 @@ void setup_tcp_server_communication()
 	    int port;
 
             sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
-	    /**
-	     * parce buff
-	     */
+
+	    sscanf(buff, "%[^:]:%[^:]:%d", peer_name, peer_ip, peer_port);
 	    server_add_peer_to_database(peer_name, peer_ip, peer_port);
 	  }
 

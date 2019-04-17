@@ -145,7 +145,9 @@ int server_receive_option(int comm_socket_fd)
 {
   int sent_recv_bytes = 0;
   sent_recv_bytes = recv(comm_socket_fd, (char *)dbuf, sizeof(dbuf), 0);
+  
   printf("Server got: %s\n", dbuf);
+  
   if(dbuf[0] == 0)
   {
     printf("will send file\n");
@@ -168,16 +170,12 @@ char client_choose_option()
   char option = -1;
   
   printf("Synchronise or download file?(1|0)\n");
-  scanf(" %d", &option);
+  scanf("%d", &option);
   
-  if (option == '1')
-  {
+  if (option == 1)
     return 1;
-  }
-  else if (option == '0')
-  {
+  else if (option == 0)
     return 0;
-  }
   else
     return -1;
 }
@@ -268,11 +266,8 @@ void setup_tcp_server_communication()
     return;
   }
   
-  int i = 0;
-  
   while(1)
   {
-    i++;
     FD_ZERO(&readfds);                     
     FD_SET(master_sock_tcp_fd, &readfds);  
     printf("blocked on select System call...\n");
@@ -288,30 +283,55 @@ void setup_tcp_server_communication()
 	exit(0); 
       }        
       // SERVER ESTABLISHED CONNECTION WITH NEW NODE
-      char int_string[10], new_peer_name[10] = "name_";
-
-      snprintf(int_string, 3, "%d", i);
-      strcat(new_peer_name, int_string);
-      printf("Got new node! %s:%s:%u\n ", new_peer_name,inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-      server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
       
       while(1)
       {
-        printf("Wait for an option from client:\n");
-        int option = 1;
+        char option;
         option = server_receive_option(comm_socket_fd);
-        printf("received option: %d\n", option);
-        if(option == 1)
-	{
-          
+      
+        if (option == 1)
+        {
+	  char buff[1024] = {0};
+          char new_peer_name[256] = {0}, ip[16];
+	  int port;
+
+          sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
+	  sscanf(buff, "%[^:]:%[^:]:%d:%s", new_peer_name, ip, port, buff);
+          printf("Got new node! %s:%s:%u\n ", new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+          server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+	  /**
+	   * parse files
+	   */
+          sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
+	  
+	  int nnodes;
+	  memcpy(&nnodes, buff, 4);
+	  nnodes = ntohs(nnodes);
+
+	  int i;
+	  for (i = 0; i < nnodes; i++)
+	  {	
+            char peer_name[256] = {0}, peer_ip[16] = {0};
+	    int port;
+
+            sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
+	    /**
+	     * parce buff
+	     */
+	    server_add_peer_to_database(peer_name, peer_ip, peer_port);
+	  }
+
         }
-	else if (option == 0)
-	{
-          server_send_file(comm_socket_fd);
+        else if (option == 0)
+        {
+           server_send_file(comm_socket_fd);
         }
-	else 
-	  printf("Server got wrong option\n");    
-      }
+        else 
+        {
+   	  close(comm_socket_fd);
+        }
+	close(comm_socket_fd);
+      } 
     }
   }
 }
@@ -358,7 +378,6 @@ void setup_tcp_client_communication()
     /**
      * count nodes
      */
-
     nnodes = htons(nnodes);
     sent_recv_bytes = send(sockfd, &nnodes, sizeof(buff), 0);
 
@@ -375,8 +394,7 @@ void setup_tcp_client_communication()
   {
     printf("file request\n");
     // CHANGE FILE NAME HERE
-    client_request_file(sockfd, "file.txt");
-    
+    client_request_file(sockfd, FILENAME);
   } 
   else 
     printf("Error with choosing an option\n");
