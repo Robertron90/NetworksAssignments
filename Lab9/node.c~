@@ -387,7 +387,9 @@ void setup_tcp_client_communication()
     /**
      * count nodes
      */
-    sent_recv_bytes = send(sockfd, &htons(nnodes), sizeof(buff), 0);
+    nnodes = htons(nnodes);
+    sent_recv_bytes = send(sockfd, &nnodes, sizeof(buff), 0);
+    nnodes = 0;
 
     int i;
     for (i = 0; i < nnodes; i++)
