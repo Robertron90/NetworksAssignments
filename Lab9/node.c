@@ -303,7 +303,7 @@ void setup_tcp_server_communication()
 	  int port;
 
           sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
-	  sscanf(buff, "%[^:]:%[^:]:%d:%s", new_peer_name, ip, port, buff2);
+	  sscanf(buff, "%[^:]:%[^:]:%d:%s", new_peer_name, ip, &port, buff2);
           printf("Got new node! %s:%s:%u\n ", new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
           server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 	  
@@ -328,7 +328,7 @@ void setup_tcp_server_communication()
 
             sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
 
-	    sscanf(buff, "%[^:]:%[^:]:%d", peer_name, peer_ip, peer_port);
+	    sscanf(buff, "%[^:]:%[^:]:%d", peer_name, peer_ip, &peer_port);
 	    server_add_peer_to_database(peer_name, peer_ip, peer_port);
 	  }
 
