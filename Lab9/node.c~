@@ -148,7 +148,7 @@ int server_receive_option(int comm_socket_fd)
   char option = -1;
   sent_recv_bytes = recv(comm_socket_fd, (char *)option, sizeof(option), 0);
   
-  printf("Server got: %s\n", option);
+  printf("Server got: %d\n", option);
   
   if(option == 0)
   {
@@ -298,7 +298,6 @@ void setup_tcp_server_communication()
           printf("Got new node! %s:%s:%u\n ", new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
           server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 	  
-	   
 	  char *captured;
           captured = strtok(buff, ",");
           for(;captured;captured = strtok(NULL, ","))

@@ -209,11 +209,13 @@ void server_send_file(int comm_socket_fd)
     strcat(result, words_count_str);
   }        
   // SEND RESPONSE WITH yes/no & # of Words IN FILE
-  sent_recv_bytes = send(comm_socket_fd, (char *)&result, sizeof(char)*10, 0);
+  words_count = htons(words_count);
+  sent_recv_bytes = send(comm_socket_fd, (char *)&words_count, sizeof(words_count), 0);
   printf("Server ---------> client: '%s'\n", result);
+  words_count = ntohs(words_count);
   char **data = ftoa(dbuf);
   int i;
-  while(1)
+  for (i = 0; i < words_count; i++)
   {
     // SEND CURRENT FILE WORD TO CLIENT
     char current_word[1024];
