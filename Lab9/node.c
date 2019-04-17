@@ -283,7 +283,7 @@ void setup_tcp_server_communication()
 	exit(0); 
       }        
       // SERVER ESTABLISHED CONNECTION WITH NEW NODE
-      
+      printf("connection accepted\n");
       while(1)
       {
         char option;
