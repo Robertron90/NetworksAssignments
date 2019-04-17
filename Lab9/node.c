@@ -163,7 +163,6 @@ int server_receive_option(int comm_socket_fd)
   else
   {
     return -1;
-    printf("Wrong option. connection refused\n");
   } 
 }
 
