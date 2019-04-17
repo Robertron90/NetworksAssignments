@@ -214,14 +214,10 @@ void server_send_file(int comm_socket_fd)
   int i;
   while(1)
   {
-    sent_recv_bytes = recv(comm_socket_fd, (char *)dbuf, sizeof(dbuf), 0);
-    if (sent_recv_bytes == 0) break;
-    sscanf(dbuf, "%d", &i);
-    printf("Server got:%s\n", dbuf);
     // SEND CURRENT FILE WORD TO CLIENT
-    char current_word[30];
+    char current_word[1024];
     strcpy(current_word, data[i-1]);
-    sent_recv_bytes = send(comm_socket_fd, (char *)&current_word, sizeof(char)*50, 0);
+    sent_recv_bytes = send(comm_socket_fd, (char *)&current_word, sizeof(current_word), 0);
     printf("Server -----------> client: %s\n", current_word);
   }
 }
@@ -375,34 +371,30 @@ void setup_tcp_client_communication()
     strncat(buff, ":", 1024);
     strncat(buff, NODE_PORT, 1024);
     strncat(buff, ":", 1024);
+  
+    DIR *newd;
+    struct dirent *dir;
+    newd = opendir(".");
+    if (newd)
+    {
+      while ((dir = readdir(newd)) != NULL)
+      {
+        strncat(buff, dir->d_name, 1024);
+        strncat(buff, ",", 1024);
+      }
+      closedir(newd);
+    }
 
-    
-     DIR *newd;
-     struct dirent *dir;
-     newd = opendir(".");
-     if (newd)
-     {
-        while ((dir = readdir(newd)) != NULL)
-        {
-           strcat(buff, dir->d_name);
-           strcat(buff, ",");
-        }
-	closedir(newd);
-     }
-	
-     
-     
     sent_recv_bytes = send(sockfd, &buff, sizeof(buff), 0);
 
     int nnodes = 0;
     /**
      * count nodes
      */
-    nnodes = htons(nnodes);
-    sent_recv_bytes = send(sockfd, &nnodes, sizeof(buff), 0);
+    sent_recv_bytes = send(sockfd, &htons(nnodes), sizeof(buff), 0);
 
     int i;
-    for (i = 0; i < ntohs(nnodes); i++)
+    for (i = 0; i < nnodes; i++)
     {
       /**
        * send nodes

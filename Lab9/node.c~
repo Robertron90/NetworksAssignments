@@ -10,9 +10,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/select.h>
+#include <dirent.h>
 
 /*Server process is running on this port no. Client has to send data to this port no*/
-#define SERVER_PORT		2000 
+#define SERVER_PORT		2002
 #define SERVER_IP_ADDRESS	"127.0.0.1"
 #define FILENAME		"file.txt"
 
@@ -131,7 +132,7 @@ void client_request_file(int sockfd, char *file)
       // RECEIVE THE i'th WORD ROM SERVER
       // -! size of receive buffer should be greater than sent buffer of server
       
-      sent_recv_bytes =  recv(sockfd, (char *)&result3, sizeof(result), 0);
+      sent_recv_bytes =  recv(sockfd, (char *)&result3, sizeof(result3), 0);
       printf("client got: %s\n", result3);
 
       if (i > 1) fputs(" ", f);
@@ -299,9 +300,15 @@ void setup_tcp_server_communication()
 	  sscanf(buff, "%[^:]:%[^:]:%d:%s", new_peer_name, ip, port, buff);
           printf("Got new node! %s:%s:%u\n ", new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
           server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-	  /**
-	   * parse files
-	   */
+	  
+	   
+	  char *captured;
+          captured = strtok(buff, ",");
+          for(;captured;captured = strtok(NULL, ","))
+	  {
+ 	     printf("new file %s\n", captured);
+          } 
+	   
           sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
 	  
 	  int nnodes;
@@ -312,12 +319,11 @@ void setup_tcp_server_communication()
 	  for (i = 0; i < nnodes; i++)
 	  {	
             char peer_name[256] = {0}, peer_ip[16] = {0};
-	    int port;
+	    int peer_port;
 
             sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
-	    /**
-	     * parce buff
-	     */
+
+	    sscanf(buff, "%[^:]:%[^:]:%d", peer_name, peer_ip, peer_port);
 	    server_add_peer_to_database(peer_name, peer_ip, peer_port);
 	  }
 
@@ -368,21 +374,34 @@ void setup_tcp_client_communication()
     strncat(buff, NODE_IP, 1024);
     strncat(buff, ":", 1024);
     strncat(buff, NODE_PORT, 1024);
+    strncat(buff, ":", 1024);
 
-    /**
-     * add files
-     */
+    
+     DIR *newd;
+     struct dirent *dir;
+     newd = opendir(".");
+     if (newd)
+     {
+        while ((dir = readdir(newd)) != NULL)
+        {
+           strcat(buff, dir->d_name);
+           strcat(buff, ",");
+        }
+	closedir(newd);
+     }
+	
+     
+     
     sent_recv_bytes = send(sockfd, &buff, sizeof(buff), 0);
 
-    int nnodes;
+    int nnodes = 0;
     /**
      * count nodes
      */
-    nnodes = htons(nnodes);
-    sent_recv_bytes = send(sockfd, &nnodes, sizeof(buff), 0);
+    sent_recv_bytes = send(sockfd, &htons(nnodes), sizeof(buff), 0);
 
     int i;
-    for (i = 0; i < ntohs(nnodes); i++)
+    for (i = 0; i < nnodes; i++)
     {
       /**
        * send nodes
