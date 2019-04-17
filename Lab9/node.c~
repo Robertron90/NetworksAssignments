@@ -47,7 +47,7 @@ int word_count(char* file)
   return count;
 }
 
-char** ftoa(char* file)
+/*char** ftoa(char* file)
 {
   int size = word_count(file);
   FILE *f = fopen(file, "r");
@@ -74,7 +74,7 @@ char** ftoa(char* file)
   fclose(f);
   return data;
 }
-
+*/
 void server_add_peer_to_database(char *new_peer_name, char* ip, int port)
 {
   FILE *f = fopen("peer_database.txt", "a");
@@ -124,10 +124,9 @@ void client_request_file(int sockfd, char *file)
     int i;
     char result3[1024] = {0};
     // REQUEST i'th WORD FROM FILE FROM SERVER
-    for (i = 1; i <= words_count; i++)
+    for (i = 0; i < words_count; i++)
     {
-      // CONVERT i TO STRING msg
-      snprintf(send_msg, 3, "%d", i);    
+      // CONVERT i TO STRING msg 
       
       // RECEIVE THE i'th WORD ROM SERVER
       // -! size of receive buffer should be greater than sent buffer of server
@@ -135,8 +134,8 @@ void client_request_file(int sockfd, char *file)
       sent_recv_bytes =  recv(sockfd, (char *)&result3, sizeof(result3), 0);
       printf("client got: %s\n", result3);
 
-      if (i > 1) fputs(" ", f);
-      fputs(result3, f);
+      if (i > 1) fprintf(f, " ");
+      fprintf(f, result3);
     }
     fclose(f);
   } 
@@ -302,7 +301,7 @@ void setup_tcp_server_communication()
           char new_peer_name[256] = {0}, ip[16];
 	  int port;
 
-          sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
+          sent_recv_bytes = recv(comm_socket_fd, (char *)&buff, sizeof(buff), 0);
 	  sscanf(buff, "%[^:]:%[^:]:%d:%s", new_peer_name, ip, &port, buff2);
           printf("Got new node! %s:%s:%u\n ", new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
           server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
@@ -314,7 +313,7 @@ void setup_tcp_server_communication()
  	     printf("new file %s\n", captured);
           } 
 	   
-          sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
+          sent_recv_bytes = recv(comm_socket_fd, (char *)&buff, sizeof(buff), 0);
 	  
 	  int nnodes;
 	  memcpy(&nnodes, buff, 4);
@@ -326,7 +325,7 @@ void setup_tcp_server_communication()
             char peer_name[256] = {0}, peer_ip[16] = {0};
 	    int peer_port;
 
-            sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
+            sent_recv_bytes = recv(comm_socket_fd, (char *)&buff, sizeof(buff), 0);
 
 	    sscanf(buff, "%[^:]:%[^:]:%d", peer_name, peer_ip, &peer_port);
 	    server_add_peer_to_database(peer_name, peer_ip, peer_port);
