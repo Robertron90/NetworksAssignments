@@ -198,11 +198,11 @@ void server_send_file(int comm_socket_fd)
   
   char result[10] = "no";
   printf("Server got: %s\n", dbuf);
-  int fd = open(dbuf, 2);
+  int fd = open(dbuf, 2), words_count = -1;
   if (fd > 0)
   {
     strcpy(result, "yes ");
-    int words_count = word_count(dbuf);
+    words_count = word_count(dbuf);
     char words_count_str[3] = "str";
     snprintf(words_count_str, 3, "%d", words_count);
     strcat(result, words_count_str);
