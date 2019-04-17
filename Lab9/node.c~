@@ -273,6 +273,9 @@ void setup_tcp_server_communication()
     select(master_sock_tcp_fd + 1, &readfds, NULL, NULL, NULL); 
     if (FD_ISSET(master_sock_tcp_fd, &readfds))
     { 
+
+      while(1)
+      {
       // Connection run
       printf("New connection recieved recvd, accept the connection. Client and Server completes TCP-3 way handshake at this point\n");
       comm_socket_fd = accept(master_sock_tcp_fd, (struct sockaddr *)&client_addr, &addr_len);
@@ -283,24 +286,22 @@ void setup_tcp_server_communication()
       }        
       // SERVER ESTABLISHED CONNECTION WITH NEW NODE
       printf("connection accepted\n");
-      while(1)
-      {
         char option;
         option = server_receive_option(comm_socket_fd);
       
         if (option == 1)
         {
-	  char buff[1024] = {0};
+	  char buff[1024] = {0}, buff2[1024] = {0};
           char new_peer_name[256] = {0}, ip[16];
 	  int port;
 
           sent_recv_bytes = recv(comm_socket_fd, (char *)buff, sizeof(buff), 0);
-	  sscanf(buff, "%[^:]:%[^:]:%d:%s", new_peer_name, ip, port, buff);
+	  sscanf(buff, "%[^:]:%[^:]:%d:%s", new_peer_name, ip, port, buff2);
           printf("Got new node! %s:%s:%u\n ", new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
           server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 	  
 	  char *captured;
-          captured = strtok(buff, ",");
+          captured = strtok(buff2, ",");
           for(;captured;captured = strtok(NULL, ","))
 	  {
  	     printf("new file %s\n", captured);
