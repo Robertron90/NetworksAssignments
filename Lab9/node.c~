@@ -109,7 +109,7 @@ void client_request_file(int sockfd, char *file)
   int nwords;
   memcpy(&nwords, result2, 4);
 
-  int words_count = nwords;
+  int words_count = ntohs(nwords);
 
   {
     printf("file exist, request for download, #ofWords: %d\n", words_count);
@@ -145,16 +145,17 @@ void client_request_file(int sockfd, char *file)
 int server_receive_option(int comm_socket_fd)
 {
   int sent_recv_bytes = 0;
-  sent_recv_bytes = recv(comm_socket_fd, (char *)dbuf, sizeof(dbuf), 0);
+  char option = -1;
+  sent_recv_bytes = recv(comm_socket_fd, (char *)option, sizeof(option), 0);
   
-  printf("Server got: %s\n", dbuf);
+  printf("Server got: %s\n", option);
   
-  if(dbuf[0] == 0)
+  if(option == 0)
   {
     printf("will send file\n");
     return 0;
   }
-  else if (dbuf[0] = 1)
+  else if (option == 1)
   {
     printf("will synchronise\n");
     return 1;
@@ -364,13 +365,8 @@ void setup_tcp_client_communication()
     printf("syn request\n");
     char buff[1024] = {0};
     int sent_recv_bytes;
-    
-    strncpy(buff, NODE_NAME, 1024);
-    strncat(buff, ":", 1024);
-    strncat(buff, NODE_IP, 1024);
-    strncat(buff, ":", 1024);
-    strncat(buff, NODE_PORT, 1024);
-    strncat(buff, ":", 1024);
+    sprintf(buff, "%s:%s:%d:", NODE_NAME, NODE_IP, NODE_PORT);
+    //pritnf(buff);
   
     DIR *newd;
     struct dirent *dir;

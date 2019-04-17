@@ -365,14 +365,8 @@ void setup_tcp_client_communication()
     printf("syn request\n");
     char buff[1024] = {0};
     int sent_recv_bytes;
-    
-    strncpy(buff, NODE_NAME, 1024);
-    strncat(buff, ":", 1024);
-    strncat(buff, NODE_IP, 1024);
-    strncat(buff, ":", 1024);
-    strncat(buff, NODE_PORT, 1024);
-    strncat(buff, ":", 1024);
-    pritnf(buff);
+    sprintf(buff, "%s:%s:%d:", NODE_NAME, NODE_IP, NODE_PORT);
+    //pritnf(buff);
   
     DIR *newd;
     struct dirent *dir;
@@ -393,7 +387,9 @@ void setup_tcp_client_communication()
     /**
      * count nodes
      */
-    sent_recv_bytes = send(sockfd, &htons(nnodes), sizeof(buff), 0);
+    nnodes = htons(nnodes);
+    sent_recv_bytes = send(sockfd, &nnodes, sizeof(buff), 0);
+    nnodes = 0;
 
     int i;
     for (i = 0; i < nnodes; i++)
