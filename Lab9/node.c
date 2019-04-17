@@ -9,11 +9,18 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/select.h>
 
 /*Server process is running on this port no. Client has to send data to this port no*/
-#define SERVER_PORT     2000 
-#define SERVER_IP_ADDRESS   "10.20.1.22"
-#define FILENAME   "file.txt"
+#define SERVER_PORT		2000 
+#define SERVER_IP_ADDRESS	"127.0.0.1"
+#define FILENAME		"file.txt"
+
+#define NODE_NAME	"my_node"
+#define NODE_IP		"127.0.0.1"
+#define NODE_PORT	2001
+
+#define h_addr h_addr_list[0]
 
 char dbuf[1024];
 char file[1024] = FILENAME;
@@ -90,47 +97,48 @@ void client_request_file(int sockfd, char *file)
   int sent_recv_bytes = 0;
   // SEND FILENAME TO SERVER
   char send_msg[1024];
-  // printf("check if server has file\n");
   strcpy(send_msg, file);
   sent_recv_bytes = send(sockfd, &send_msg, sizeof(send_msg), 0);
   // printf("No of bytes sent = %d\n", sent_recv_bytes);
   // GET THE ANSWER FROM SERVER IF IT HAS FILE & # of words in file
-  char result2[10];
+  char result2[4];
   sent_recv_bytes =  recv(sockfd, (char *)&result2, sizeof(char)*10, 0);
   // printf("No of bytes received = %d: %s\n", sent_recv_bytes, result2);
-  char if_file_exist[4] = "none";
-  int words_count = 10;
-  sscanf(result2, "%s %d", if_file_exist, &words_count);
-  printf("%s %d\n", if_file_exist, words_count);
+  
+  int nwords;
+  memcpy(&nwords, result2, 4);
 
-  if (strcmp(if_file_exist, "yes") == 0)
+  int words_count = nwords;
+
   {
     printf("file exist, request for download, #ofWords: %d\n", words_count);
     FILE *f = fopen(file, "w");
 
-    if(f == NULL) {printf("Unable to create file"); exit(-3);}
+    if (f == NULL)
+    { 
+      printf("Unable to create file");
+      exit(-1);
+    }
     
-    int i = 1;
-    char result3[50] = "string";
+    int i;
+    char result3[1024] = {0};
     // REQUEST i'th WORD FROM FILE FROM SERVER
-    while (i <= words_count)
+    for (i = 1; i <= words_count; i++)
     {
       // CONVERT i TO STRING msg
       snprintf(send_msg, 3, "%d", i);    
-      // SEND i TO SERVER
-      printf("request %s'th word\n", send_msg);
-      sent_recv_bytes = send(sockfd, &send_msg, sizeof(char)*3, 0);
+      
       // RECEIVE THE i'th WORD ROM SERVER
       // -! size of receive buffer should be greater than sent buffer of server
-      sent_recv_bytes =  recv(sockfd, (char *)&result3, sizeof(char)*50, 0);
+      
+      sent_recv_bytes =  recv(sockfd, (char *)&result3, sizeof(result), 0);
       printf("client got: %s\n", result3);
+
       if (i > 1) fputs(" ", f);
       fputs(result3, f);
-      i++;
     }
+    fclose(f);
   } 
-  else
-    printf("server has no file\n");
 }
 
 int server_receive_option(int comm_socket_fd)
@@ -174,15 +182,13 @@ char client_choose_option()
     return -1;
 }
 
-void client_send_option(int sockfd, int option)
+void client_send_option(int sockfd, char option)
 {
   int sent_recv_bytes = 0;
-  char send_msg[2];
 
-  snprintf(send_msg, 2, "%d", option);
-  printf("Client ---------> server: %s\n", send_msg);
+  printf("Client ---------> server: %d\n", option);
   
-  sent_recv_bytes = send(sockfd, &send_msg, sizeof(send_msg), 0);
+  sent_recv_bytes = send(sockfd, &option, sizeof(option), 0);
   printf("No of bytes sent = %d\n", sent_recv_bytes);
 }
 
@@ -276,7 +282,11 @@ void setup_tcp_server_communication()
       // Connection run
       printf("New connection recieved recvd, accept the connection. Client and Server completes TCP-3 way handshake at this point\n");
       comm_socket_fd = accept(master_sock_tcp_fd, (struct sockaddr *)&client_addr, &addr_len);
-      if(comm_socket_fd < 0){ printf("accept error : errno = %d\n", errno); exit(0); }        
+      if (comm_socket_fd < 0)
+      {
+	printf("accept error : errno = %d\n", errno); 
+	exit(0); 
+      }        
       // SERVER ESTABLISHED CONNECTION WITH NEW NODE
       char int_string[10], new_peer_name[10] = "name_";
 
@@ -284,6 +294,7 @@ void setup_tcp_server_communication()
       strcat(new_peer_name, int_string);
       printf("Got new node! %s:%s:%u\n ", new_peer_name,inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
       server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
+      
       while(1)
       {
         printf("Wait for an option from client:\n");
@@ -299,10 +310,7 @@ void setup_tcp_server_communication()
           server_send_file(comm_socket_fd);
         }
 	else 
-	  printf("Server got wrong option\n");
-        
-        
-          
+	  printf("Server got wrong option\n");    
       }
     }
   }
@@ -325,14 +333,43 @@ void setup_tcp_client_communication()
 	// CONNECT TO THE SERVER
   
   connect(sockfd, (struct sockaddr *)&dest,sizeof(struct sockaddr));
-
-  char option = client_choose_option();
   
+  char option = client_choose_option();  
   client_send_option(sockfd, option);
   
   if (option == 1)
   {
     printf("syn request\n");
+    char buff[1024] = {0};
+    int sent_recv_bytes;
+    
+    strncpy(buff, NODE_NAME, 1024);
+    strncat(buff, ":", 1024);
+    strncat(buff, NODE_IP, 1024);
+    strncat(buff, ":", 1024);
+    strncat(buff, NODE_PORT, 1024);
+
+    /**
+     * add files
+     */
+    sent_recv_bytes = send(sockfd, &buff, sizeof(buff), 0);
+
+    int nnodes;
+    /**
+     * count nodes
+     */
+
+    nnodes = htons(nnodes);
+    sent_recv_bytes = send(sockfd, &nnodes, sizeof(buff), 0);
+
+    int i;
+    for (i = 0; i < ntohs(nnodes); i++)
+    {
+      /**
+       * send nodes
+       */
+      sent_recv_bytes = send(sockfd, &buff, sizeof(buff), 0);
+    }
   } 
   else if (option == 0) 
   {
