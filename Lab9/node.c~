@@ -51,9 +51,9 @@ char** ftoa(char* file)
 {
   int size = word_count(file);
   FILE *f = fopen(file, "r");
-  char **data = (char **)calloc(size, sizeof(char *));
+  static char **data = (char **)calloc(size, sizeof(char *));
 
-  for (int i=0; i<size; i++)  data[i] = (char *)calloc(30, sizeof(int));
+  for (int i=0; i<size; i++)  data[i] = (char *)calloc(1024, sizeof(int));
   if (f == NULL) return (char **)1;
   
   char c;
@@ -210,7 +210,7 @@ void server_send_file(int comm_socket_fd)
   // SEND RESPONSE WITH yes/no & # of Words IN FILE
   words_count = htons(words_count);
   sent_recv_bytes = send(comm_socket_fd, (char *)&words_count, sizeof(words_count), 0);
-  printf("Server ---------> client: '%s'\n", result);
+  printf("Server ---------> client: '%d'\n", words_count);
   words_count = ntohs(words_count);
   char **data = ftoa(dbuf);
   int i;
