@@ -215,13 +215,17 @@ void server_send_file(int comm_socket_fd)
   sent_recv_bytes = send(comm_socket_fd, (char *)&words_count, sizeof(words_count), 0);
   printf("Server ---------> client: '%d'\n", words_count);
   words_count = ntohs(words_count);
-  char **data = ftoa(dbuf);
+  /**
+   * segfault
+   */
+  //char **data = ftoa(dbuf);
   int i;
+  FILE *f = fopen(dbuf, "r");
   for (i = 0; i < words_count; i++)
   {
     // SEND CURRENT FILE WORD TO CLIENT
     char current_word[1024];
-    strcpy(current_word, data[i-1]);
+    fscanf(f, "%s", current_word);
     sent_recv_bytes = send(comm_socket_fd, (char *)&current_word, sizeof(current_word), 0);
     printf("Server -----------> client: %s\n", current_word);
   }

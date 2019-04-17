@@ -148,7 +148,10 @@ int server_receive_option(int comm_socket_fd)
   char option = -1;
   sent_recv_bytes = recv(comm_socket_fd, (char *)&option, sizeof(option), 0);
   
-  printf("Server got: %d\n", option);
+  if (option != -1)
+  {
+    printf("Server got: %d\n", option);
+  }
   
   if(option == 0)
   {
