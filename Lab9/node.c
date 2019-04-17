@@ -155,19 +155,18 @@ int server_receive_option(int comm_socket_fd)
   } 
 }
 
-int client_choose_option()
+char client_choose_option()
 {
-  int option = -1;
+  char option = -1;
+  
   printf("Synchronise or download file?(1|0)\n");
-  // char buffer[100];
-  // fgets(buffer, 99, stdin);
-  // sscanf(buffer, "%d", &option);
   scanf(" %d", &option);
-  if(option == 1)
+  
+  if (option == '1')
   {
     return 1;
   }
-  else if (option == 0)
+  else if (option == '0')
   {
     return 0;
   }
@@ -315,17 +314,22 @@ void setup_tcp_client_communication()
   sent_recv_bytes = 0;
   int addr_len = 0;
   addr_len = sizeof(struct sockaddr);
+
   struct sockaddr_in dest;
   dest.sin_family = AF_INET;
   dest.sin_port = SERVER_PORT;
+  
   struct hostent *host = (struct hostent *)gethostbyname(SERVER_IP_ADDRESS);
   dest.sin_addr = *((struct in_addr *)host->h_addr);
   sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	// CONNECT TO THE SERVER
+  
   connect(sockfd, (struct sockaddr *)&dest,sizeof(struct sockaddr));
 
-  int option = client_choose_option();
+  char option = client_choose_option();
+  
   client_send_option(sockfd, option);
+  
   if (option == 1)
   {
     printf("syn request\n");
