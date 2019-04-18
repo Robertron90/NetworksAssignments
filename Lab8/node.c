@@ -180,7 +180,7 @@ void server_send_file(int comm_socket_fd)
   // SEND RESPONSE WITH yes/no & # of Words IN FILE
   words_count = htons(words_count);
   sent_recv_bytes = send(comm_socket_fd, (char *)&words_count, sizeof(words_count), 0);
-  printf("\r\nserver ---------> client: '%d'\n", words_count);
+  printf("\r\nserver ---------> client: '%d'\n", ntohs(words_count));
   words_count = ntohs(words_count);
   /**
    * segfault
@@ -193,7 +193,7 @@ void server_send_file(int comm_socket_fd)
     // SEND CURRENT FILE WORD TO CLIENT
     char current_word[1024];
     fscanf(f, "%s", current_word);
-    sent_recv_bytes = sendto(comm_socket_fd, (char *)&current_word, sizeof(current_word), 0, NULL, 0);
+    sent_recv_bytes = sendto(comm_socket_fd, (char *)current_word, sizeof(current_word), 0, NULL, 0);
     printf("\r\nserver -----------> client: %s\n", current_word);
   }
 }
