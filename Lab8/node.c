@@ -19,7 +19,7 @@
 
 #define NODE_NAME	"my_node"
 #define NODE_IP		"127.0.0.1"
-#define NODE_PORT	2001
+#define NODE_PORT	2002
 
 #define h_addr h_addr_list[0]
 
@@ -99,7 +99,7 @@ void client_request_file(int sockfd, char *file)
     for (i = 0; i < words_count; i++)
     {
       sent_recv_bytes = recvfrom(sockfd, (char *)send_msg, sizeof(send_msg), MSG_WAITALL, NULL, 0);
-      printf("\n\rclient got: %s\n", send_msg);
+      printf("\n\rclient got:%s\n", send_msg);
       
       fprintf(f, "%s", send_msg);
 
@@ -168,15 +168,17 @@ void server_send_file(int comm_socket_fd)
   
   char result[10] = "no";
   printf("\r\nserver got: %s\n", dbuf);
-  int fd = open(dbuf, 2), words_count = -1;
-  if (fd > 0)
+  //FILE *fd = open(dbuf, "r");
+  int words_count = -1;
+  /*if (fd != NULL)
   {
-    strcpy(result, "yes ");
+    strcpy(result, "yes ");*/
     words_count = word_count(dbuf);
-    char words_count_str[3] = "str";
+    /*char words_count_str[3] = "str";
     snprintf(words_count_str, 3, "%d", words_count);
     strcat(result, words_count_str);
   }        
+  fclose(fd);*/
   // SEND RESPONSE WITH yes/no & # of Words IN FILE
   words_count = htons(words_count);
   sent_recv_bytes = send(comm_socket_fd, (char *)&words_count, sizeof(words_count), 0);
@@ -191,9 +193,9 @@ void server_send_file(int comm_socket_fd)
   for (i = 0; i < words_count; i++)
   {
     // SEND CURRENT FILE WORD TO CLIENT
-    char current_word[1024];
+    char current_word[256];
     fscanf(f, "%s", current_word);
-    sent_recv_bytes = sendto(comm_socket_fd, (char *)current_word, sizeof(current_word), 0, NULL, 0);
+    sent_recv_bytes = sendto(comm_socket_fd, (char *)&current_word, sizeof(current_word), 0, NULL, 0);
     printf("\r\nserver -----------> client: %s\n", current_word);
   }
 }
@@ -341,7 +343,7 @@ void setup_tcp_client_communication()
     char buff[1024] = {0};
     int sent_recv_bytes;
     sprintf(buff, "%s:%s:%d:", NODE_NAME, NODE_IP, NODE_PORT);
-    //pritnf(buff);
+    
   
     DIR *newd;
     struct dirent *dir;
