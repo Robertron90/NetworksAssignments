@@ -98,10 +98,15 @@ void client_request_file(int sockfd, char *file)
     // REQUEST i'th WORD FROM FILE FROM SERVER
     for (i = 0; i < words_count; i++)
     {
+      do
+      {
       sent_recv_bytes = recvfrom(sockfd, (char *)&result3, sizeof(result3), 0, NULL, 0);
       printf("\n\rclient got: %s\n", result3);
       
-      fprintf(f, "%s ", result3);
+      fprintf(f, "%s", result3);
+      } while (sent_recv_bytes > 0); 
+
+      fprintf(f, " ");
     }
     fclose(f);
   } 
