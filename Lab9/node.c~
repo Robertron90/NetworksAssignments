@@ -47,34 +47,6 @@ int word_count(char* file)
   return count;
 }
 
-/*char** ftoa(char* file)
-{
-  int size = word_count(file);
-  FILE *f = fopen(file, "r");
-  static char **data = (char **)calloc(size, sizeof(char *));
-
-  for (int i=0; i<size; i++)  data[i] = (char *)calloc(1024, sizeof(int));
-  if (f == NULL) return (char **)1;
-  
-  char c;
-  int count = 0;
-  int i = -1;
-  while((c = fgetc(f)) != EOF)
-  {
-    if(c == ' ' || c == '\n')
-    {
-      data[count][++i] = '\0';
-      count++;
-      i = -1;
-    }
-    else 
-      data[count][++i] = c;
-  }
-
-  fclose(f);
-  return data;
-}
-*/
 void server_add_peer_to_database(char *new_peer_name, char* ip, int port)
 {
   FILE *f = fopen("peer_database.txt", "a");
@@ -112,7 +84,7 @@ void client_request_file(int sockfd, char *file)
   int words_count = ntohs(nwords);
 
   {
-    printf("file exist, request for download, #ofWords: %d\n", words_count);
+    printf("\n\rfile exist, request for download, #ofWords: %d\n", words_count);
     FILE *f = fopen(file, "w");
 
     if (f == NULL)
@@ -126,16 +98,11 @@ void client_request_file(int sockfd, char *file)
     // REQUEST i'th WORD FROM FILE FROM SERVER
     for (i = 0; i < words_count; i++)
     {
-      // CONVERT i TO STRING msg 
+      sent_recv_bytes = recv(sockfd, (char *)&result3, sizeof(result3), 0);
+      printf("\n\rclient got: %s\n", result3);
       
-      // RECEIVE THE i'th WORD ROM SERVER
-      // -! size of receive buffer should be greater than sent buffer of server
-      
-      sent_recv_bytes =  recv(sockfd, (char *)&result3, sizeof(result3), 0);
-      printf("client got: %s\n", result3);
-
-      if (i > 1) fprintf(f, " ");
       fprintf(f, result3);
+      fprintf(f, " ");
     }
     fclose(f);
   } 
@@ -149,17 +116,17 @@ int server_receive_option(int comm_socket_fd)
   
   if (option != -1)
   {
-    printf("Server got: %d\n", option);
+    printf("\r\nserver got: %d\n", option);
   }
   
   if(option == 0)
   {
-    printf("will send file\n");
+    printf("\r\nwill send file\n");
     return 0;
   }
   else if (option == 1)
   {
-    printf("will synchronise\n");
+    printf("\r\nwill synchronise\n");
     return 1;
   } 
   else
@@ -172,7 +139,7 @@ char client_choose_option()
 {
   char option = -1;
   
-  printf("Synchronise or download file?(1|0)\n");
+  printf("synchronise or download file?(1|0)\n");
   scanf("%d", &option);
   
   if (option == 1)
@@ -187,10 +154,10 @@ void client_send_option(int sockfd, char option)
 {
   int sent_recv_bytes = 0;
 
-  printf("Client ---------> server: %d\n", option);
+  printf("\r\nclient ---------> server: %d\n", option);
   
   sent_recv_bytes = send(sockfd, &option, sizeof(option), 0);
-  printf("No of bytes sent = %d\n", sent_recv_bytes);
+  printf("\r\nno of bytes sent = %d\n", sent_recv_bytes);
 }
 
 void server_send_file(int comm_socket_fd)
@@ -199,7 +166,7 @@ void server_send_file(int comm_socket_fd)
   sent_recv_bytes = recv(comm_socket_fd, (char *)dbuf, sizeof(dbuf), 0);
   
   char result[10] = "no";
-  printf("Server got: %s\n", dbuf);
+  printf("\r\nserver got: %s\n", dbuf);
   int fd = open(dbuf, 2), words_count = -1;
   if (fd > 0)
   {
@@ -212,7 +179,7 @@ void server_send_file(int comm_socket_fd)
   // SEND RESPONSE WITH yes/no & # of Words IN FILE
   words_count = htons(words_count);
   sent_recv_bytes = send(comm_socket_fd, (char *)&words_count, sizeof(words_count), 0);
-  printf("Server ---------> client: '%d'\n", words_count);
+  printf("\r\nserver ---------> client: '%d'\n", words_count);
   words_count = ntohs(words_count);
   /**
    * segfault
@@ -226,7 +193,7 @@ void server_send_file(int comm_socket_fd)
     char current_word[1024];
     fscanf(f, "%s", current_word);
     sent_recv_bytes = send(comm_socket_fd, (char *)&current_word, sizeof(current_word), 0);
-    printf("Server -----------> client: %s\n", current_word);
+    printf("\r\nserver -----------> client: %s\n", current_word);
   }
 }
 
@@ -263,7 +230,7 @@ void setup_tcp_server_communication()
   if (getsockname(master_sock_tcp_fd, (struct sockaddr *)&sin, &len) == -1)
       perror("getsockname");
   else
-      printf("port number %d\n", ntohs(sin.sin_port));
+      printf("\r\nport number %d\n", ntohs(sin.sin_port));
 
   if (listen(master_sock_tcp_fd, 5)<0) 
   {
@@ -283,7 +250,7 @@ void setup_tcp_server_communication()
       while(1)
       {
       // Connection run
-      printf("New connection recieved recvd, accept the connection. Client and Server completes TCP-3 way handshake at this point\n");
+      printf("\r\nnew connection recieved recvd, accept the connection. Client and Server completes TCP-3 way handshake at this point\n");
       comm_socket_fd = accept(master_sock_tcp_fd, (struct sockaddr *)&client_addr, &addr_len);
       if (comm_socket_fd < 0)
       {
@@ -291,7 +258,7 @@ void setup_tcp_server_communication()
 	exit(0); 
       }        
       // SERVER ESTABLISHED CONNECTION WITH NEW NODE
-      printf("connection accepted\n");
+      printf("\r\nconnection accepted\n");
         char option;
         option = server_receive_option(comm_socket_fd);
       
@@ -303,14 +270,14 @@ void setup_tcp_server_communication()
 
           sent_recv_bytes = recv(comm_socket_fd, (char *)&buff, sizeof(buff), 0);
 	  sscanf(buff, "%[^:]:%[^:]:%d:%s", new_peer_name, ip, &port, buff2);
-          printf("Got new node! %s:%s:%u\n ", new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+          printf("\r\ngot new node! %s:%s:%u\n ", new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
           server_add_peer_to_database(new_peer_name, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 	  
 	  char *captured;
           captured = strtok(buff2, ",");
           for(;captured;captured = strtok(NULL, ","))
 	  {
- 	     printf("new file %s\n", captured);
+ 	     printf("\r\nnew file %s\n", captured);
           } 
 	   
           sent_recv_bytes = recv(comm_socket_fd, (char *)&buff, sizeof(buff), 0);
@@ -369,7 +336,7 @@ void setup_tcp_client_communication()
   
   if (option == 1)
   {
-    printf("syn request\n");
+    printf("\r\nsyn request\n");
     char buff[1024] = {0};
     int sent_recv_bytes;
     sprintf(buff, "%s:%s:%d:", NODE_NAME, NODE_IP, NODE_PORT);
@@ -409,12 +376,12 @@ void setup_tcp_client_communication()
   } 
   else if (option == 0) 
   {
-    printf("file request\n");
+    printf("\r\nfile request\n");
     // CHANGE FILE NAME HERE
     client_request_file(sockfd, FILENAME);
   } 
   else 
-    printf("Error with choosing an option\n");
+    printf("error with choosing an option\n");
 }
 
 int main(int argc, char **argv)
@@ -422,7 +389,7 @@ int main(int argc, char **argv)
   char option = 'd';
   while(1)
   {
-    printf("Run as a client or as a server?(c|s)\n");
+    printf("run as a client or as a server?(c|s)\n");
     scanf(" %c", &option);
     if(option == 's')
     {
