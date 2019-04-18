@@ -100,7 +100,7 @@ void client_request_file(int sockfd, char *file)
     {
       do
       {
-      sent_recv_bytes = recvfrom(sockfd, (char *)&result3, sizeof(result3), 0, NULL, 0);
+      sent_recv_bytes = recvfrom(sockfd, (char *)&result3, sizeof(result3) - 1, 0, NULL, 0);
       printf("\n\rclient got: %s\n", result3);
       
       fprintf(f, "%s", result3);
@@ -196,7 +196,7 @@ void server_send_file(int comm_socket_fd)
     // SEND CURRENT FILE WORD TO CLIENT
     char current_word[1024];
     fscanf(f, "%s", current_word);
-    sent_recv_bytes = sendto(comm_socket_fd, (char *)&current_word, sizeof(current_word), 0, NULL, 0);
+    sent_recv_bytes = sendto(comm_socket_fd, (char *)&current_word, sizeof(current_word) + 1, 0, NULL, 0);
     printf("\r\nserver -----------> client: %s\n", current_word);
   }
 }
